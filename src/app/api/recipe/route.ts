@@ -44,7 +44,7 @@ ${JSON.stringify(menu, null, 2)}
 `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash-8b',
+      model: 'gemini-1.5-flash',
       contents: prompt,
       config: {
         responseMimeType: "application/json",
