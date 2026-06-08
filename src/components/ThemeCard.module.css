@@ -11,7 +11,7 @@
 .imageContainer {
   position: relative;
   width: 100%;
-  aspect-ratio: 2 / 3;
+  aspect-ratio: 9 / 16;
   background: #f4f0ec; /* 紙のような少し暖かい色 */
 }
 
