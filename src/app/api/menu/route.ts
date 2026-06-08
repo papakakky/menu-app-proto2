@@ -44,19 +44,22 @@ const MOCK_THEMES: ThemeProposal[] = [
 
 export async function POST(req: Request) {
   try {
-    const { time, month } = await req.json();
+    const { time, month, dayOfWeek } = await req.json();
     
-    // APIキーが設定されていない場合はモックを返す（プロトタイプが動くようにする）
+    // APIキーが設定されていない場合はモックを返す
     if (!process.env.GEMINI_API_KEY) {
       console.warn("GEMINI_API_KEY is not set. Returning mock data.");
+      MOCK_THEMES[0].themeTitle = "エラー: APIキーがVercelに設定されていません";
       return NextResponse.json({ themes: MOCK_THEMES });
     }
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     
+
     const prompt = `
 あなたは雑誌『dancyu』や『オレンジページ』の敏腕編集者兼AIシェフです。
-現在のコンテキスト（時刻: ${time}, 季節/月: ${month}月）に基づいて、読者（ユーザー）の気分にぴったりな「食卓のワクワク感を提案する」3つの献立テーマを作成してください。
+現在のコンテキスト（時刻: ${time}, 季節/月: ${month}月, 曜日: ${dayOfWeek}曜日）に基づいて、読者（ユーザー）の気分にぴったりな「食卓のワクワク感を提案する」3つの献立テーマを作成してください。
+同じテーマばかりにならないよう、ジャンル（和・洋・中・エスニックなど）や切り口をバラバラにしてください。
 
 以下のトーン＆マナーを厳格に守ってください。
 ・単なる料理名や条件の羅列はNG。
@@ -96,9 +99,10 @@ export async function POST(req: Request) {
     const data = JSON.parse(textVal || "{}");
     return NextResponse.json(data);
     
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini API Error:", error);
     // エラー時もとりあえずモックを返してアプリが落ちないようにする
+    MOCK_THEMES[0].themeTitle = "APIエラー: " + (error.message || "タイムアウト等の不明なエラー");
     return NextResponse.json({ themes: MOCK_THEMES });
   }
 }

@@ -21,11 +21,12 @@ export default function Home() {
       const now = new Date();
       const time = now.getHours() >= 17 ? '夜' : (now.getHours() >= 11 ? '昼' : '朝');
       const month = now.getMonth() + 1;
+      const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][now.getDay()];
 
       const res = await fetch('/api/menu', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ time, month })
+        body: JSON.stringify({ time, month, dayOfWeek })
       });
       const data = await res.json();
       setThemes(data.themes || []);
