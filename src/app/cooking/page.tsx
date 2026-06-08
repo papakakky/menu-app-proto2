@@ -42,7 +42,7 @@ export default function CookingPage() {
     window.open(`https://cookpad.com/search/${query}`, '_blank');
   };
 
-  const allIngredients = tabs.flatMap(t => t.dish.ingredients);
+  const allIngredients = tabs.flatMap(t => t.dish.ingredients || []);
 
   return (
     <div className={styles.container}>
@@ -113,7 +113,7 @@ export default function CookingPage() {
                 材料
               </h2>
               <ul className={styles.list}>
-                {currentDish.ingredients.map((ing, i) => (
+                {(currentDish.ingredients || []).map((ing, i) => (
                   <li key={i} className={styles.listItem}>
                     {/* チェックボックスを削除して黒ポチなどのスタイルに変更 */}
                     <span style={{ color: 'var(--color-secondary)', marginRight: '0.5rem' }}>•</span>
@@ -129,7 +129,7 @@ export default function CookingPage() {
                 ざっくり手順
               </h2>
               <ul className={styles.list}>
-                {currentDish.steps.map((step, i) => (
+                {(currentDish.steps || []).map((step, i) => (
                   <li key={i} className={styles.listItem}>
                     <div className={styles.stepNumber}>{i + 1}</div>
                     <span>{step}</span>

@@ -2,33 +2,31 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft } from 'lucide-react';
-import type { Menu as MenuType } from '@/types';
-import MenuCard from '@/components/MenuCard';
-import { useFavorites } from '@/hooks/useFavorites';
+import { ChevronLeft, Loader2 } from 'lucide-react';
+import type { ThemeProposal } from '@/types';
+import ThemeCard from '@/components/ThemeCard';
 import styles from './page.module.css';
 
 export default function ChatPage() {
   const router = useRouter();
   const [initialMessage, setInitialMessage] = useState('');
-  const [baseMenu, setBaseMenu] = useState<MenuType | null>(null);
+  const [baseTheme, setBaseTheme] = useState<ThemeProposal | null>(null);
   
   const [isAiLoading, setIsAiLoading] = useState(true);
   const [aiReply, setAiReply] = useState('');
-  const [proposedMenu, setProposedMenu] = useState<MenuType | null>(null);
-  
-  const { isFavorite, toggleFavorite } = useFavorites();
+  const [proposedTheme, setProposedTheme] = useState<ThemeProposal | null>(null);
+  const [isGeneratingRecipe, setIsGeneratingRecipe] = useState(false);
 
   useEffect(() => {
     const msg = localStorage.getItem('chat_initial_message') || '';
-    const menuStr = localStorage.getItem('chat_base_menu');
+    const themeStr = localStorage.getItem('chat_base_theme');
     setInitialMessage(msg);
     
-    if (menuStr) {
+    if (themeStr) {
       try {
-        const menu = JSON.parse(menuStr);
-        setBaseMenu(menu);
-        fetchChat(msg, menu);
+        const theme = JSON.parse(themeStr);
+        setBaseTheme(theme);
+        fetchChat(msg, theme);
       } catch (e) {
         console.error(e);
       }
@@ -37,17 +35,17 @@ export default function ChatPage() {
     }
   }, [router]);
 
-  const fetchChat = async (message: string, base: MenuType) => {
+  const fetchChat = async (message: string, base: ThemeProposal) => {
     setIsAiLoading(true);
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, baseMenu: base })
+        body: JSON.stringify({ message, baseTheme: base })
       });
       const data = await res.json();
       setAiReply(data.reply);
-      setProposedMenu(data.menu);
+      setProposedTheme(data.theme);
     } catch (err) {
       console.error(err);
     } finally {
@@ -55,9 +53,21 @@ export default function ChatPage() {
     }
   };
 
-  const handleDecide = (menu: MenuType) => {
-    localStorage.setItem('current_menu', JSON.stringify(menu));
-    router.push('/cooking');
+  const handleDecide = async (theme: ThemeProposal) => {
+    setIsGeneratingRecipe(true);
+    try {
+      const res = await fetch('/api/recipe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ menu: theme.menu })
+      });
+      const data = await res.json();
+      localStorage.setItem('current_menu', JSON.stringify(data.menu));
+      router.push('/cooking');
+    } catch (err) {
+      console.error(err);
+      setIsGeneratingRecipe(false);
+    }
   };
 
   const handleEdit = () => {
@@ -92,18 +102,25 @@ export default function ChatPage() {
           )}
         </div>
 
-        {proposedMenu && !isAiLoading && (
+        {proposedTheme && !isAiLoading && (
           <div style={{ animation: 'slideUpFade 0.5s var(--transition-spring) 0.4s forwards', opacity: 0 }}>
-            <MenuCard 
-              menu={proposedMenu} 
+            <ThemeCard 
+              theme={proposedTheme} 
               onDecide={handleDecide}
               onEdit={handleEdit}
-              isFavorite={isFavorite(proposedMenu.id)}
-              onToggleFavorite={toggleFavorite}
             />
           </div>
         )}
       </main>
+
+      {isGeneratingRecipe && (
+        <div className={styles.recipeLoadingOverlay}>
+          <div className={styles.recipeLoadingBox}>
+            <Loader2 className={styles.spinner} size={40} />
+            <p>レシピを作成中...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
